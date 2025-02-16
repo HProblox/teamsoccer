@@ -1,0 +1,24 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:FindFirstChildOfClass("Humanoid")
+local uis = game:GetService("UserInputService")
+
+-- Cấu hình
+local speedBoost = 100 -- Tốc độ khi chạy nhanh
+local normalSpeed = 16 -- Tốc độ bình thường
+
+-- Hàm đổi tốc độ
+function toggleSpeed()
+	if humanoid.WalkSpeed == normalSpeed then
+		humanoid.WalkSpeed = speedBoost
+	else
+		humanoid.WalkSpeed = normalSpeed
+	end
+end
+
+-- Điều khiển bằng phím
+uis.InputBegan:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.G then -- Nhấn G để tăng tốc
+		toggleSpeed()
+	end
+end)
