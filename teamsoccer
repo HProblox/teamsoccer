@@ -1,24 +1,50 @@
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:FindFirstChildOfClass("Humanoid")
-local uis = game:GetService("UserInputService")
+local ball = script.Parent  -- Gán biến cho quả bóng
+local ballSpeed = 100  -- Tốc độ bóng bay vào khung thành
+local playerSpeed = 75  -- Tốc độ chạy của người chơi khi chạm vào bóng
 
--- Cấu hình
-local speedBoost = 100 -- Tốc độ khi chạy nhanh
-local normalSpeed = 16 -- Tốc độ bình thường
+-- Hàm tìm khung thành gần nhất
+local function getNearestGoal()
+	local closestGoal = nil
+	local closestDistance = math.huge  -- Đặt khoảng cách lớn nhất ban đầu
+	for _, obj in pairs(workspace:GetChildren()) do
+		if obj:IsA("Part") and obj.Name == "Goal" then  -- Đặt tên khung thành là "Goal"
+			local distance = (obj.Position - ball.Position).Magnitude
+			if distance < closestDistance then
+				closestDistance = distance
+				closestGoal = obj
+			end
+		end
+	end
+	return closestGoal
+end
 
--- Hàm đổi tốc độ
-function toggleSpeed()
-	if humanoid.WalkSpeed == normalSpeed then
-		humanoid.WalkSpeed = speedBoost
-	else
-		humanoid.WalkSpeed = normalSpeed
+-- Hàm tự động đưa bóng vào khung thành gần nhất
+local function shootBall()
+	local goal = getNearestGoal()
+	if goal then
+		local direction = (goal.Position - ball.Position).unit  -- Hướng bay chính xác đến khung thành
+		local bodyVelocity = Instance.new("BodyVelocity")
+		bodyVelocity.Velocity = direction * ballSpeed
+		bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)  -- Lực đẩy bóng
+		bodyVelocity.Parent = ball
+
+		-- Xóa lực sau 2 giây để tránh lỗi vật lý
+		game:GetService("Debris"):AddItem(bodyVelocity, 2)
 	end
 end
 
--- Điều khiển bằng phím
-uis.InputBegan:Connect(function(input)
-	if input.KeyCode == Enum.KeyCode.G then -- Nhấn G để tăng tốc
-		toggleSpeed()
+-- Khi bóng chạm vào vật thể, tự động bay vào khung thành
+ball.Touched:Connect(function(hit)
+	if hit:IsA("BasePart") then
+		shootBall()
+
+		-- Kiểm tra nếu người chạm vào bóng là người chơi
+		local character = hit.Parent
+		local humanoid = character:FindFirstChild("Humanoid")
+		if humanoid then
+			humanoid.WalkSpeed = playerSpeed  -- Tăng tốc độ chạy của người chơi
+			wait(5)  -- Giữ tốc độ trong 5 giây
+			humanoid.WalkSpeed = 16  -- Trả lại tốc độ bình thường
+		end
 	end
 end)
